@@ -90,9 +90,9 @@ export async function textChat(
     );
     return fallbackChat(user, {
       system,
-      temperature: opts.temperature,
-      maxOutputTokens: opts.maxOutputTokens,
-      timeoutMs: opts.timeoutMs,
+      ...(opts.temperature === undefined ? {} : { temperature: opts.temperature }),
+      ...(opts.maxOutputTokens === undefined ? {} : { maxOutputTokens: opts.maxOutputTokens }),
+      ...(opts.timeoutMs === undefined ? {} : { timeoutMs: opts.timeoutMs }),
     });
   }
 }
