@@ -354,20 +354,19 @@ export async function writePrompts(
 }
 
 /**
- * Panel-to-panel continuity. Consecutive panels are consecutive moments of one
- * continuous story, so the render is told explicitly that only the camera,
- * pose and expression change from one illustration to the next.
+ * Panel-to-panel continuity.
+ *
+ * The old version appended "same place, same time of day, same characters as the
+ * previous illustration" to EVERY panel. On a narrator-heavy script that forced
+ * every line — demons in Busan, an army mobilising, backstory from another era —
+ * to be redrawn as the previous panel's couple standing in the previous
+ * panel's room. Each panel now stands on its own: only the ART STYLE is shared,
+ * and that already comes from composeImagePrompt's style block.
  */
 export function chainContinuity(prompts: string[]): string[] {
-  return prompts.map((p, i) =>
-    i === 0
-      ? p
-      : `${p} Direct visual continuation of the immediately previous illustration in the same story: ` +
-        `identical art style, and the same characters with identical faces, hair, clothing and colours; ` +
-        `unless this line itself moves the story, also the same place, the same time of day, the same weather ` +
-        `and the same props in the same positions — only the camera angle, the pose and the expression change.`,
-  );
+  return prompts;
 }
+
 
 
 function fallbackPrompt(s: Segment, action?: string): string {
