@@ -575,22 +575,15 @@ export function characterLock(prompt: string, bible?: string): string {
   if (!bible) return "";
   const entries = parseBible(bible);
   if (entries.length === 0) return "";
-  let matched = entries.filter((e) => new RegExp(`\\b${escapeRe(e.name)}\\b`, "i").test(prompt));
-  // Pronoun-only beats ("he was lying on the stone") name nobody. Falling back
-  // to the FIRST bible entry was drawing the same person (often the elderly
-  // woman listed first) into every unnamed panel, including panels about a
-  // young man. The fallback now has to agree with the prompt's own gender
-  // words, and gives up entirely when nothing matches.
-  if (matched.length === 0) {
-    const male = /\b(he|him|his|himself|man|men|boy|boys|male|guy|father|brother|son)\b/i.test(prompt);
-    const female = /\b(she|her|herself|woman|women|girl|girls|female|lady|mother|sister|daughter)\b/i.test(prompt);
-    if (!male && !female) return "";
-    const want = male && !female ? "male" : female && !male ? "female" : null;
-    if (!want) return "";
-    const candidate = entries.find((e) => genderOf(e.traits) === want);
-    if (!candidate) return "";
-    matched = [candidate];
-  }
+  // NAMED CHARACTERS ONLY. The old pronoun fallback pulled a main character
+  // into any panel containing "he"/"she" — including panels about soldiers,
+  // crowds and strangers — which is exactly how narration lines turned into
+  // generic "main couple standing somewhere" pictures. No name, no lock.
+  const matched = entries.filter((e) =>
+    new RegExp(`\\b${escapeRe(e.name)}\\b`, "i").test(prompt),
+  );
+  if (matched.length === 0) return "";
+
 
 
   return (
