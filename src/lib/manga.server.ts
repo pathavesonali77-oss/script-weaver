@@ -394,10 +394,16 @@ const TEXT_TRIGGERS: [RegExp, string][] = [
   // Balloons/lettering furniture: naming them at all makes Flux draw them.
   [/\b(speech|thought|dialogue|word)\s*(bubble|balloon)s?\b/gi, ""],
   [/\b(comic|manga|manhwa|webtoon)\s+(page|panel|panels|strip|layout|gutters?)\b/gi, "illustration"],
-  [/\b(says?|saying|shouts?|shouting|whispers?|whispering|yells?|screams?|mutters?|exclaims?)\s*[,:]?\s*["“'][^"”']{0,160}["”']/gi, ""],
+  [/\b(says?|saying|shouts?|shouting|whispers?|whispering|yells?|screams?|mutters?|exclaims?)\s*[,:]?\s*["“][^"”]{0,160}["”']/gi, ""],
   [/"[^"]{0,120}"/g, ""],
-  [/'[^']{2,120}'/g, ""],
+  // Single quotes: ONLY a genuine quoted span. The old /'[^']{2,120}'/ treated
+  // two possessive apostrophes as a pair and deleted everything between them —
+  // "Henan's ... demon's" lost the whole middle of the description. An opening
+  // quote may not follow a letter, and a closing quote may not sit between
+  // letters (that is a possessive or a contraction, not a quote).
+  [/(?<![A-Za-z0-9])'(?=\S)[^'\n]{2,120}(?<=\S)'(?![A-Za-z0-9])/g, ""],
   [/“[^”]{0,120}”/g, ""],
+
 ];
 
 /**
