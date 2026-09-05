@@ -723,7 +723,9 @@ export async function generateImage(
   seed: number,
   slot = 0,
   bible?: string,
+  attempts = 6,
 ): Promise<string> {
+
   const keys = pixazoKeys();
   const body = composeImagePrompt(prompt, bible).slice(0, 2000);
 
