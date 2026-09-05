@@ -730,7 +730,7 @@ export async function generateImage(
   const body = composeImagePrompt(prompt, bible).slice(0, 2000);
 
   let lastErr = "";
-  for (let attempt = 0; attempt < 6; attempt++) {
+  for (let attempt = 0; attempt < Math.max(1, attempts); attempt++) {
     const key = pickKey(keys, slot, attempt);
     try {
       const res = await fetch(PIXAZO_URL, {
