@@ -431,6 +431,7 @@ function Index() {
                           seed: 1000 + r.index + attempt * 7919,
                           bible: b,
                           slot: keyTick++,
+                          line: job?.seg.text,
                         },
                       });
                       url = res.url;
@@ -514,7 +515,7 @@ function Index() {
         }
 
         const { url } = await draw({
-          data: { prompt, seed: 7000 + shot.index, slot: keyTick++, bible },
+          data: { prompt, seed: 7000 + shot.index, slot: keyTick++, bible, line: shot.text },
         });
         record(shot.index, { url, prompt, status: "done", error: undefined });
       } catch (e) {
@@ -573,6 +574,7 @@ function Index() {
           seed: 20000 + index * 31 + Math.floor(Math.random() * 9000),
           slot: index + 1,
           bible,
+          line: shotsRef.current.find((s) => s.index === index)?.text,
         },
       });
       record(index, { url, prompt, status: "done", error: undefined });
