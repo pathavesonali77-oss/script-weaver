@@ -1,6 +1,8 @@
 import type { Segment } from "./script";
 import { pixazoKeys, pickKey } from "./keys.server";
 import { geminiChat } from "./gemini.server";
+import { fallbackChat, hasFallback } from "./text-fallback.server";
+
 
 const PIXAZO_URL = "https://gateway.pixazo.ai/flux-1-schnell/v1/getData";
 
