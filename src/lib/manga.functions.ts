@@ -56,14 +56,22 @@ export const renderImage = createServerFn({ method: "POST" })
         prompt: z.string().min(5),
         seed: z.number().int(),
         bible: z.string().optional(),
+        line: z.string().optional(),
         slot: z.number().int().min(0).default(0),
       })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const url = await generateImage(data.prompt, data.seed, data.slot, data.bible);
-    return { url };
+    const { url, prompt } = await renderPanel(
+      data.prompt,
+      data.seed,
+      data.slot,
+      data.bible,
+      data.line,
+    );
+    return { url, prompt };
   });
+
 
 /**
  * Renders several panels in one round trip. Failures are reported per item so
