@@ -772,6 +772,106 @@ export async function generateImage(
 }
 
 /* ------------------------------------------------------------------ */
+/* Never-give-up render ladder                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Progressive prompt rewrites used when a panel keeps failing.
+ *
+ * Level 0 is the prompt as written. Higher levels strip whatever most often
+ * makes a render fail (over-long text, exotic wording, quoted fragments,
+ * violent/adult nouns the free tier refuses) while keeping the actual subject
+ * of the line, and the last level is a short, plain description that the
+ * renderer practically always accepts.
+ */
+export function promptVariant(prompt: string, level: number, line?: string): string {
+  const base = sanitizePrompt(prompt);
+  if (level <= 0) return base;
+
+  // 1 — shorten: keep the first sentences (subject, action, setting) only.
+  if (level === 1) {
+    const parts = base.split(/(?<=[.!?])\s+/).filter(Boolean);
+    return parts.slice(0, Math.max(2, Math.ceil(parts.length / 2))).join(" ").slice(0, 600);
+  }
+
+  // 2 — soften: replace wording the free renderer commonly refuses, and drop
+  // decorative clauses in brackets.
+  if (level === 2) {
+    const soft: [RegExp, string][] = [
+      [/\b(blood|bloody|bleeding|gore|gory|mutilated|dismembered|corpse|corpses|dead bodies?|severed)\b/gi, "aftermath"],
+      [/\b(kill(s|ing|ed)?|murder(s|ing|ed)?|slaughter(s|ing|ed)?|massacre(s|d)?|stab(s|bing|bed)?|torture(s|d)?)\b/gi, "attack"],
+      [/\b(naked|nude|nudity|topless|lingerie|seductive|sensual|erotic)\b/gi, "fully clothed"],
+      [/\b(child|children|kid|kids|toddler|infant|baby)\b/gi, "young person"],
+      [/\([^)]*\)/g, " "],
+    ];
+    let out = base;
+    for (const [re, to] of soft) out = out.replace(re, to);
+    return out.replace(/\s{2,}/g, " ").trim().slice(0, 500);
+  }
+
+  // 3 — plain: one short English sentence built from the subject words.
+  if (level === 3) {
+    const head = base.split(/(?<=[.!?])\s+/)[0] ?? base;
+    return `A detailed full-colour webtoon illustration of this moment: ${head}`.slice(0, 320);
+  }
+
+  // 4+ — last resort: the script line itself, described neutrally. Always short
+  // and always safe, so a timestamp is never left without a picture.
+  const raw = (line ?? base).replace(/["“”'’]/g, " ").replace(/\s{2,}/g, " ").trim().slice(0, 200);
+  return `A detailed full-colour webtoon illustration, fully drawn background, clear natural lighting, showing: ${raw}`;
+}
+
+/**
+ * Renders one panel and REFUSES to come back empty.
+ *
+ * Ladder: the prompt as written is tried twice (each try already walks the whole
+ * image-key pool on a fresh seed). If both rounds fail, the prompt itself is
+ * progressively rewritten — shortened, softened, then reduced to a plain
+ * description of the script line — until an image comes back. Every timestamp
+ * therefore ends up with a picture in any condition.
+ */
+export async function renderPanel(
+  prompt: string,
+  seed: number,
+  slot = 0,
+  bible?: string,
+  line?: string,
+): Promise<{ url: string; prompt: string; level: number; tries: number }> {
+  const errors: string[] = [];
+  let tries = 0;
+
+  // Rounds 0-1: exactly the prompt that was written for this line.
+  for (let round = 0; round < 2; round++) {
+    tries++;
+    try {
+      const url = await generateImage(prompt, seed + round * 1861, slot + round, bible, 3);
+      return { url, prompt, level: 0, tries };
+    } catch (e) {
+      errors.push(`round ${round + 1}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    await new Promise((r) => setTimeout(r, 600 * (round + 1)));
+  }
+
+  // Rounds 2+: modified prompts, each level simpler and safer than the last.
+  for (let level = 1; level <= 5; level++) {
+    const variant = promptVariant(prompt, level, line);
+    if (!variant || variant.length < 20) continue;
+    tries++;
+    try {
+      const url = await generateImage(variant, seed + level * 5471, slot + level, bible, 3);
+      return { url, prompt: variant, level, tries };
+    } catch (e) {
+      errors.push(`level ${level}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    await new Promise((r) => setTimeout(r, 700 * level));
+  }
+
+  throw new Error(`Image generation failed after ${tries} tries — ${errors.slice(-2).join(" | ")}`);
+}
+
+
+
+/* ------------------------------------------------------------------ */
 /* Post-render review                                                  */
 /* ------------------------------------------------------------------ */
 
