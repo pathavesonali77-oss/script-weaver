@@ -75,8 +75,26 @@ export async function textChat(
     attempts?: number;
   } = {},
 ): Promise<string> {
-  return geminiChat(user, { system, ...opts });
+  try {
+    return await geminiChat(user, { system, ...opts });
+  } catch (e) {
+    // Every Gemini key unusable (expired/revoked key, or all daily quota gone):
+    // keep writing through the backup engine instead of falling back to raw
+    // script lines, which is what produced generic pictures.
+    if (!hasFallback()) throw e;
+    console.error(
+      "Gemini text engine unavailable, using backup engine:",
+      e instanceof Error ? e.message : e,
+    );
+    return fallbackChat(user, {
+      system,
+      temperature: opts.temperature,
+      maxOutputTokens: opts.maxOutputTokens,
+      timeoutMs: opts.timeoutMs,
+    });
+  }
 }
+
 
 function stripFences(s: string): string {
   return s
