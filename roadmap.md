@@ -7,7 +7,10 @@
 - [x] Per-panel Retry button: rebuilds the panel's 15-line chunk, regenerates the
       brief/prompt with the preceding chunk as context, re-renders on a fresh seed,
       timestamps untouched, progress persisted
-- [ ] Reduce final video encoding from 1080p 30fps to 720p 24fps (browser + Colab encoder)
+- [x] Reduce final video encoding from 1080p 30fps to 720p 24fps (browser + Colab encoder)
+- [ ] Gemini keys: user re-saved real AI Studio keys via update_secret; sandbox session
+      still serves the old AQ tokens (stale env) — confirm a run uses Gemini (not the
+      backup engine) in a fresh preview session
 
 ## Done
 - [x] Confirmed the text service allows 5 requests/min PER KEY (not 60) — 7 keys = 35/min total
